@@ -58,3 +58,4 @@ projek-portofolio/
 * Logika Interaktif: Vanilla JavaScript (ES6+ manipulasi DOM, pemfilteran dinamis, manajemen status antarmuka)
 * Visualisasi Data: Chart.js, HTML5 Canvas
 * Alat Pipeline Analitik: SQL (PostgreSQL Window Functions), Python (Pandas)
+
