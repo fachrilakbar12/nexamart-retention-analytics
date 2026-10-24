@@ -1,0 +1,43 @@
+/* ==========================================================================
+   NexaMart Analytics - Custom Styles
+   ========================================================================== */
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Custom Scrollbar */
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* Glassmorphism Navigation */
+.glass-nav {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Heatmap Cell Hover Animation */
+.heat-cell {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.heat-cell:hover {
+  transform: scale(1.05);
+  z-index: 20;
+}
+

@@ -1,0 +1,78 @@
+/**
+ * NexaMart Analytics - Datasets
+ * 1. rawCustomerData: 60 customer records with RFM & Churn metrics
+ * 2. cohortMatrix: Monthly Retention Cohort Matrix (M0 to M5)
+ */
+
+const rawCustomerData = [
+  { id: "CUST-001", name: "Budi Santoso", channel: "Google Search", category: "Elektronik", recency: 12, frequency: 7, monetary: 8450000, rfm: "555", segment: "Champions", churnProb: 5.2 },
+  { id: "CUST-002", name: "Siti Rahmawati", channel: "Meta Ads", category: "Fashion", recency: 64, frequency: 1, monetary: 420000, rfm: "111", segment: "Lost", churnProb: 88.4 },
+  { id: "CUST-003", name: "Andi Pratama", channel: "Organic", category: "Elektronik", recency: 18, frequency: 4, monetary: 3600000, rfm: "444", segment: "Loyal Customers", churnProb: 15.0 },
+  { id: "CUST-004", name: "Dewi Lestari", channel: "Influencer", category: "Kecantikan", recency: 72, frequency: 3, monetary: 2850000, rfm: "144", segment: "At Risk", churnProb: 76.5 },
+  { id: "CUST-005", name: "Eko Prasetyo", channel: "Google Search", category: "F&B", recency: 22, frequency: 3, monetary: 1450000, rfm: "433", segment: "Potential Loyalist", churnProb: 24.1 },
+  { id: "CUST-006", name: "Fajar Nugraha", channel: "Meta Ads", category: "Fashion", recency: 85, frequency: 1, monetary: 380000, rfm: "111", segment: "Lost", churnProb: 92.0 },
+  { id: "CUST-007", name: "Gita Handayani", channel: "Organic", category: "Kecantikan", recency: 8, frequency: 6, monetary: 5200000, rfm: "555", segment: "Champions", churnProb: 4.8 },
+  { id: "CUST-008", name: "Hendra Wijaya", channel: "Google Search", category: "Elektronik", recency: 14, frequency: 5, monetary: 7100000, rfm: "555", segment: "Champions", churnProb: 8.2 },
+  { id: "CUST-009", name: "Indah Permata", channel: "Meta Ads", category: "Fashion", recency: 68, frequency: 2, monetary: 1100000, rfm: "132", segment: "At Risk", churnProb: 81.3 },
+  { id: "CUST-010", name: "Joko Susilo", channel: "Organic", category: "F&B", recency: 32, frequency: 4, monetary: 2400000, rfm: "343", segment: "Loyal Customers", churnProb: 32.0 },
+  { id: "CUST-011", name: "Kartika Sari", channel: "Influencer", category: "Kecantikan", recency: 19, frequency: 2, monetary: 980000, rfm: "422", segment: "Potential Loyalist", churnProb: 21.5 },
+  { id: "CUST-012", name: "Lukman Hakim", channel: "Meta Ads", category: "Elektronik", recency: 94, frequency: 1, monetary: 1200000, rfm: "112", segment: "Lost", churnProb: 95.1 },
+  { id: "CUST-013", name: "Mega Utami", channel: "Google Search", category: "Fashion", recency: 11, frequency: 6, monetary: 4800000, rfm: "555", segment: "Champions", churnProb: 6.0 },
+  { id: "CUST-014", name: "Nur Hidayat", channel: "Organic", category: "F&B", recency: 15, frequency: 4, monetary: 2950000, rfm: "443", segment: "Loyal Customers", churnProb: 14.5 },
+  { id: "CUST-015", name: "Oki Setiawan", channel: "Meta Ads", category: "Elektronik", recency: 77, frequency: 3, monetary: 3400000, rfm: "144", segment: "At Risk", churnProb: 79.2 },
+  { id: "CUST-016", name: "Putri Anggraini", channel: "Influencer", category: "Kecantikan", recency: 25, frequency: 2, monetary: 1150000, rfm: "322", segment: "Potential Loyalist", churnProb: 28.0 },
+  { id: "CUST-017", name: "Qori Amelia", channel: "Google Search", category: "Fashion", recency: 9, frequency: 7, monetary: 6200000, rfm: "555", segment: "Champions", churnProb: 3.5 },
+  { id: "CUST-018", name: "Rian Saputra", channel: "Organic", category: "Elektronik", recency: 61, frequency: 2, monetary: 2100000, rfm: "133", segment: "At Risk", churnProb: 74.0 },
+  { id: "CUST-019", name: "Siska Wulandari", channel: "Meta Ads", category: "F&B", recency: 102, frequency: 1, monetary: 290000, rfm: "111", segment: "Lost", churnProb: 96.8 },
+  { id: "CUST-020", name: "Taufik Ismail", channel: "Google Search", category: "Elektronik", recency: 16, frequency: 5, monetary: 5900000, rfm: "555", segment: "Champions", churnProb: 9.1 },
+  { id: "CUST-021", name: "Utami Ningsih", channel: "Influencer", category: "Kecantikan", recency: 35, frequency: 3, monetary: 1850000, rfm: "333", segment: "Potential Loyalist", churnProb: 34.5 },
+  { id: "CUST-022", name: "Vicky Kurniawan", channel: "Meta Ads", category: "Fashion", recency: 73, frequency: 1, monetary: 490000, rfm: "111", segment: "Lost", churnProb: 89.2 },
+  { id: "CUST-023", name: "Wahyu Ramadhan", channel: "Organic", category: "F&B", recency: 13, frequency: 4, monetary: 3100000, rfm: "444", segment: "Loyal Customers", churnProb: 12.0 },
+  { id: "CUST-024", name: "Xenia Zahra", channel: "Google Search", category: "Elektronik", recency: 7, frequency: 8, monetary: 9800000, rfm: "555", segment: "Champions", churnProb: 2.1 },
+  { id: "CUST-025", name: "Yoga Pratama", channel: "Influencer", category: "Fashion", recency: 59, frequency: 2, monetary: 1350000, rfm: "232", segment: "At Risk", churnProb: 68.4 },
+  { id: "CUST-026", name: "Zainal Abidin", channel: "Meta Ads", category: "Elektronik", recency: 88, frequency: 1, monetary: 950000, rfm: "112", segment: "Lost", churnProb: 93.4 },
+  { id: "CUST-027", name: "Adelia Putri", channel: "Organic", category: "Kecantikan", recency: 17, frequency: 5, monetary: 4400000, rfm: "454", segment: "Loyal Customers", churnProb: 16.2 },
+  { id: "CUST-028", name: "Bambang Sudiro", channel: "Google Search", category: "F&B", recency: 10, frequency: 6, monetary: 3900000, rfm: "554", segment: "Champions", churnProb: 7.0 },
+  { id: "CUST-029", name: "Cynthia Bella", channel: "Influencer", category: "Fashion", recency: 65, frequency: 3, monetary: 2750000, rfm: "144", segment: "At Risk", churnProb: 75.3 },
+  { id: "CUST-030", name: "Dimas Anggara", channel: "Meta Ads", category: "Elektronik", recency: 110, frequency: 1, monetary: 780000, rfm: "111", segment: "Lost", churnProb: 98.0 },
+  { id: "CUST-031", name: "Erna Maryati", channel: "Google Search", category: "Kecantikan", recency: 14, frequency: 4, monetary: 3200000, rfm: "444", segment: "Loyal Customers", churnProb: 13.5 },
+  { id: "CUST-032", name: "Firman Syah", channel: "Organic", category: "Fashion", recency: 28, frequency: 2, monetary: 1250000, rfm: "322", segment: "Potential Loyalist", churnProb: 29.8 },
+  { id: "CUST-033", name: "Grace Olivia", channel: "Influencer", category: "Kecantikan", recency: 6, frequency: 7, monetary: 6900000, rfm: "555", segment: "Champions", churnProb: 3.0 },
+  { id: "CUST-034", name: "Hari Santika", channel: "Meta Ads", category: "F&B", recency: 79, frequency: 1, monetary: 340000, rfm: "111", segment: "Lost", churnProb: 91.5 },
+  { id: "CUST-035", name: "Irfan Bachdim", channel: "Google Search", category: "Elektronik", recency: 15, frequency: 5, monetary: 6400000, rfm: "555", segment: "Champions", churnProb: 8.8 },
+  { id: "CUST-036", name: "Jessica Mila", channel: "Organic", category: "Fashion", recency: 21, frequency: 3, monetary: 1950000, rfm: "433", segment: "Potential Loyalist", churnProb: 22.0 },
+  { id: "CUST-037", name: "Kurnia Sandi", channel: "Influencer", category: "Elektronik", recency: 63, frequency: 2, monetary: 2200000, rfm: "133", segment: "At Risk", churnProb: 73.1 },
+  { id: "CUST-038", name: "Lestari Ayu", channel: "Meta Ads", category: "Kecantikan", recency: 92, frequency: 1, monetary: 450000, rfm: "111", segment: "Lost", churnProb: 94.2 },
+  { id: "CUST-039", name: "Maulana Malik", channel: "Google Search", category: "F&B", recency: 11, frequency: 5, monetary: 3800000, rfm: "554", segment: "Champions", churnProb: 6.5 },
+  { id: "CUST-040", name: "Nabila Syakieb", channel: "Organic", category: "Fashion", recency: 16, frequency: 4, monetary: 3400000, rfm: "444", segment: "Loyal Customers", churnProb: 14.1 },
+  { id: "CUST-041", name: "Oscar Lawalata", channel: "Influencer", category: "Fashion", recency: 69, frequency: 3, monetary: 3100000, rfm: "144", segment: "At Risk", churnProb: 77.8 },
+  { id: "CUST-042", name: "Panji Gumilang", channel: "Meta Ads", category: "Elektronik", recency: 115, frequency: 1, monetary: 650000, rfm: "111", segment: "Lost", churnProb: 99.0 },
+  { id: "CUST-043", name: "Qiana Zahira", channel: "Google Search", category: "Kecantikan", recency: 8, frequency: 6, monetary: 5400000, rfm: "555", segment: "Champions", churnProb: 4.2 },
+  { id: "CUST-044", name: "Raden Mas", channel: "Organic", category: "Elektronik", recency: 24, frequency: 3, monetary: 2800000, rfm: "433", segment: "Potential Loyalist", churnProb: 25.4 },
+  { id: "CUST-045", name: "Sherina Munaf", channel: "Influencer", category: "F&B", recency: 13, frequency: 5, monetary: 4100000, rfm: "554", segment: "Champions", churnProb: 7.8 },
+  { id: "CUST-046", name: "Tedi Kurnia", channel: "Meta Ads", category: "Fashion", recency: 82, frequency: 1, monetary: 390000, rfm: "111", segment: "Lost", churnProb: 92.5 },
+  { id: "CUST-047", name: "Umar Bakri", channel: "Google Search", category: "Elektronik", recency: 17, frequency: 4, monetary: 4600000, rfm: "444", segment: "Loyal Customers", churnProb: 15.6 },
+  { id: "CUST-048", name: "Vina Pandu", channel: "Organic", category: "Kecantikan", recency: 58, frequency: 2, monetary: 1400000, rfm: "232", segment: "At Risk", churnProb: 67.2 },
+  { id: "CUST-049", name: "Wawan Hendra", channel: "Meta Ads", category: "F&B", recency: 104, frequency: 1, monetary: 310000, rfm: "111", segment: "Lost", churnProb: 97.4 },
+  { id: "CUST-050", name: "Xaverius Tio", channel: "Google Search", category: "Elektronik", recency: 5, frequency: 8, monetary: 10200000, rfm: "555", segment: "Champions", churnProb: 1.8 },
+  { id: "CUST-051", name: "Yulia Rahman", channel: "Influencer", category: "Fashion", recency: 29, frequency: 2, monetary: 1300000, rfm: "322", segment: "Potential Loyalist", churnProb: 31.0 },
+  { id: "CUST-052", name: "Zulkifli Hasan", channel: "Meta Ads", category: "Elektronik", recency: 74, frequency: 2, monetary: 1900000, rfm: "133", segment: "At Risk", churnProb: 80.0 },
+  { id: "CUST-053", name: "Anisa Rahma", channel: "Organic", category: "Kecantikan", recency: 12, frequency: 5, monetary: 4700000, rfm: "555", segment: "Champions", churnProb: 6.9 },
+  { id: "CUST-054", name: "Bagus Priyono", channel: "Google Search", category: "F&B", recency: 19, frequency: 4, monetary: 3300000, rfm: "444", segment: "Loyal Customers", churnProb: 17.0 },
+  { id: "CUST-055", name: "Clara Gopa", channel: "Influencer", category: "Fashion", recency: 67, frequency: 1, monetary: 480000, rfm: "111", segment: "Lost", churnProb: 89.5 },
+  { id: "CUST-056", name: "Deni Cagur", channel: "Meta Ads", category: "Elektronik", recency: 62, frequency: 3, monetary: 3200000, rfm: "144", segment: "At Risk", churnProb: 72.8 },
+  { id: "CUST-057", name: "Elvira Devina", channel: "Google Search", category: "Kecantikan", recency: 10, frequency: 6, monetary: 5600000, rfm: "555", segment: "Champions", churnProb: 5.5 },
+  { id: "CUST-058", name: "Ferdi Hasan", channel: "Organic", category: "Elektronik", recency: 23, frequency: 3, monetary: 2600000, rfm: "433", segment: "Potential Loyalist", churnProb: 24.8 },
+  { id: "CUST-059", name: "Gading Marten", channel: "Influencer", category: "F&B", recency: 14, frequency: 5, monetary: 4300000, rfm: "554", segment: "Champions", churnProb: 8.0 },
+  { id: "CUST-060", name: "Hesti Purwa", channel: "Meta Ads", category: "Fashion", recency: 99, frequency: 1, monetary: 360000, rfm: "111", segment: "Lost", churnProb: 95.8 }
+];
+
+const cohortMatrix = [
+  { cohort: "Jan 2024", users: 1240, m0: 100, m1: 42.1, m2: 35.4, m3: 33.2, m4: 31.8, m5: 31.2 },
+  { cohort: "Feb 2024", users: 1180, m0: 100, m1: 45.3, m2: 38.0, m3: 34.6, m4: 32.5, m5: null },
+  { cohort: "Mar 2024", users: 1350, m0: 100, m1: 48.2, m2: 39.5, m3: 36.1, m4: null, m5: null },
+  { cohort: "Apr 2024", users: 1420, m0: 100, m1: 46.0, m2: 37.8, m3: null, m4: null, m5: null },
+  { cohort: "Mei 2024", users: 1510, m0: 100, m1: 51.4, m2: null, m3: null, m4: null, m5: null },
+  { cohort: "Jun 2024", users: 1640, m0: 100, m1: null, m2: null, m3: null, m4: null, m5: null }
+];
+

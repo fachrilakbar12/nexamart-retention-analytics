@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexaMart | Customer Retention & RFM Churn Analytics Dashboard</title>
+
+  <!-- Suppress Tailwind CDN production advisory message -->
+  <script>
+    (function () {
+      const _origWarn = console.warn;
+      console.warn = function (...args) {
+        if (typeof args[0] === "string" && args[0].includes("cdn.tailwindcss.com should not be used in production")) return;
+        _origWarn.apply(console, args);
+      };
+    })();
+  </script>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/tailwind-config.js"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons (Canonical UMD bundle - bebas dari 404 source map) -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Chart.js (Canonical UMD bundle dengan resolusi source map valid) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500/30 selection:text-indigo-300">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900 border border-slate-700/80 text-white shadow-2xl transition-all duration-300 opacity-0 pointer-events-none translate-y-3">
+    <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+    <span id="toast-text" class="text-sm font-medium">Pemberitahuan berhasil</span>
+  </div>
+
+  <!-- Header & Navigasi -->
+  <header class="sticky top-0 z-40 bg-slate-900/90 border-b border-slate-800 glass-nav">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Status Tag -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+          <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base font-bold text-white tracking-tight">NexaMart Analytics</h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">Portofolio Produksi</span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">Customer Retention, Cohort Matrix & Segmentasi RFM Churn</p>
+        </div>
+      </div>
+
+      <!-- Tab Menu (Desktop) -->
+      <nav class="hidden lg:flex items-center gap-1.5 p-1 rounded-xl bg-slate-800/80 border border-slate-700/70">
+        <button id="nav-btn-dashboard" onclick="setTab('dashboard')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm transition-all">
+          <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+          <span>Executive BI Dashboard</span>
+        </button>
+        <button id="nav-btn-data" onclick="setTab('data')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/60 transition-all">
+          <i data-lucide="table" class="w-3.5 h-3.5"></i>
+          <span>Data Explorer (60+ Records)</span>
+        </button>
+        <button id="nav-btn-tech" onclick="setTab('tech')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/60 transition-all">
+          <i data-lucide="terminal" class="w-3.5 h-3.5"></i>
+          <span>Pipeline SQL & Python</span>
+        </button>
+        <button id="nav-btn-story" onclick="setTab('story')" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/60 transition-all">
+          <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+          <span>Executive Story & Rekomendasi</span>
+        </button>
+      </nav>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button onclick="exportCSV()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 transition">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i>
+          <span class="hidden sm:inline">Unduh Dataset (.CSV)</span>
+        </button>
+        <button onclick="copyProjectLink()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 transition">
+          <i data-lucide="share-2" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="hidden sm:inline">Bagikan</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Mobile Sub-Navigation -->
+    <div class="flex lg:hidden border-t border-slate-800 px-4 py-2 gap-2 overflow-x-auto custom-scroll">
+      <button onclick="setTab('dashboard')" id="m-nav-dashboard" class="px-3 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white whitespace-nowrap">Dashboard BI</button>
+      <button onclick="setTab('data')" id="m-nav-data" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 whitespace-nowrap">Data Explorer</button>
+      <button onclick="setTab('tech')" id="m-nav-tech" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 whitespace-nowrap">SQL & Python</button>
+      <button onclick="setTab('story')" id="m-nav-story" class="px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 whitespace-nowrap">Storytelling & Solusi</button>
+    </div>
+  </header>
+
+  <!-- Banner Konteks Masalah Bisnis -->
+  <aside class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2">
+        <span class="flex h-2.5 w-2.5 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+        </span>
+        <span class="text-slate-300">
+          <strong class="text-white">Fokus Studi Kasus:</strong> Terjadi penurunan retensi tajam (-43.8%) pada transaksi Bulan ke-2 (M1 ke M2) pada pelanggan dari kanal berbayar.
+        </span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400 text-[11px]">
+        <span class="flex items-center gap-1.5"><i data-lucide="database" class="w-3.5 h-3.5 text-indigo-400"></i> Total Populasi Data: 60 Transaksi Sampel</span>
+        <span class="flex items-center gap-1.5"><i data-lucide="calendar" class="w-3.5 h-3.5 text-emerald-400"></i> Periode Analisis: Q1 - Q2 2024</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Kontrol Filter Multi-Dimensi -->
+  <section class="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5">
+    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+            <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">Filter Analitik Dinamis</h2>
+            <p class="text-xs text-slate-400">Filter data transaksi untuk memperbarui metrik KPI, grafik, dan tabel secara langsung</p>
+          </div>
+        </div>
+
+        <!-- Dropdown Filter -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          
+          <!-- Kanal Akuisisi -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kanal Akuisisi</label>
+            <select id="filter-channel" onchange="runFilterPipeline()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:ring-2 focus:ring-indigo-500/50 outline-none">
+              <option value="SEMUA">Semua Kanal</option>
+              <option value="Meta Ads">Meta Ads (Instagram / FB)</option>
+              <option value="Google Search">Google Search (Intent)</option>
+              <option value="Organic">Organic (SEO / Direct)</option>
+              <option value="Influencer">Influencer / Afiliasi</option>
+            </select>
+          </div>
+
+          <!-- Segmen RFM -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Segmen RFM</label>
+            <select id="filter-segment" onchange="runFilterPipeline()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:ring-2 focus:ring-indigo-500/50 outline-none">
+              <option value="SEMUA">Semua Segmen</option>
+              <option value="Champions">Champions (Pelanggan Utama)</option>
+              <option value="Loyal Customers">Loyal Customers</option>
+              <option value="Potential Loyalist">Potential Loyalist</option>
+              <option value="At Risk">At Risk (Risiko Churn)</option>
+              <option value="Lost">Lost (Pelanggan Hilang)</option>
+            </select>
+          </div>
+
+          <!-- Kategori Produk -->
+          <div>
+            <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Kategori Produk</label>
+            <select id="filter-category" onchange="runFilterPipeline()" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:ring-2 focus:ring-indigo-500/50 outline-none">
+              <option value="SEMUA">Semua Kategori</option>
+              <option value="Elektronik">Elektronik</option>
+              <option value="Fashion">Fashion</option>
+              <option value="F&B">F&B (Makanan & Minuman)</option>
+              <option value="Kecantikan">Kecantikan & Skincare</option>
+            </select>
+          </div>
+
+          <!-- Tombol Reset -->
+          <div class="flex items-end">
+            <button onclick="resetGlobalFilters()" class="w-full px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition flex items-center justify-center gap-1.5 h-[34px]">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset Filter</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Area Konten Utama -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- ======================================================================= -->
+    <!-- TAB 1: EXECUTIVE BI DASHBOARD -->
+    <!-- ======================================================================= -->
+    <div id="tab-dashboard" class="space-y-6">
+
+      <!-- 4 Kartu KPI Metrik Utama (Format Rupiah & Persentase) -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- KPI 1: Total Pendapatan -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 hover:border-indigo-500/40 transition relative">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-medium">
+            <span>Total Pendapatan Terwujud</span>
+            <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-2xl font-extrabold text-white tracking-tight" id="kpi-revenue">Rp0</div>
+          <div class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+            <span>+14,2% vs kuartal lalu</span>
+          </div>
+        </div>
+
+        <!-- KPI 2: Customer Retention Rate M5 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 hover:border-indigo-500/40 transition relative">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-medium">
+            <span>Customer Retention Rate (M5)</span>
+            <i data-lucide="repeat" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div class="text-2xl font-extrabold text-white tracking-tight" id="kpi-retention">31,2%</div>
+          <div class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Kinerja di atas rata-rata industri (25%)</span>
+          </div>
+        </div>
+
+        <!-- KPI 3: Rata-Rata CLV -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 hover:border-indigo-500/40 transition relative">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-medium">
+            <span>Rata-Rata CLV (Customer Lifetime Value)</span>
+            <i data-lucide="user-check" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <div class="text-2xl font-extrabold text-white tracking-tight" id="kpi-clv">Rp0</div>
+          <div class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5"></i>
+            <span>+8,5% kenaikan basket size</span>
+          </div>
+        </div>
+
+        <!-- KPI 4: Rata-Rata Risiko Churn -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 hover:border-rose-500/40 transition relative">
+          <div class="flex items-center justify-between text-xs text-slate-400 mb-1.5 font-medium">
+            <span>Rata-Rata Risiko Churn</span>
+            <i data-lucide="user-minus" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <div class="text-2xl font-extrabold text-rose-400 tracking-tight" id="kpi-churn">24,8%</div>
+          <div class="mt-2 flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
+            <i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i>
+            <span>-2,1% perbaikan pasca-retargeting</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Baris Grafik 1: Cohort Retention Heatmap Matrix & Tren Pendapatan vs Churn -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Cohort Retention Heatmap Matrix (7 Kolom) -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="grid" class="w-4 h-4 text-emerald-400"></i>
+                Matriks Retensi Kohor Bulanan (Bulan 0 hingga Bulan 5)
+              </h3>
+              <p class="text-xs text-slate-400">Persentase retensi pelanggan kembali belanja dihitung dari ukuran awal kohor</p>
+            </div>
+            <!-- Indikator Warna -->
+            <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+              <span class="w-3 h-3 rounded bg-emerald-600 inline-block"></span> <span>&gt;70%</span>
+              <span class="w-3 h-3 rounded bg-emerald-800 inline-block ml-1"></span> <span>40-69%</span>
+              <span class="w-3 h-3 rounded bg-slate-800 inline-block ml-1"></span> <span>&lt;40%</span>
+            </div>
+          </div>
+
+          <!-- Tabel Heatmap -->
+          <div class="overflow-x-auto custom-scroll mt-2">
+            <table class="w-full text-center text-xs border-collapse">
+              <thead>
+                <tr class="text-[11px] text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                  <th class="py-2.5 px-3 text-left font-semibold">Kohor Bulan</th>
+                  <th class="py-2.5 px-2 font-semibold">Ukuran Basis</th>
+                  <th class="py-2.5 px-2 font-semibold">M0</th>
+                  <th class="py-2.5 px-2 font-semibold">M1</th>
+                  <th class="py-2.5 px-2 font-semibold">M2 (Drop)</th>
+                  <th class="py-2.5 px-2 font-semibold">M3</th>
+                  <th class="py-2.5 px-2 font-semibold">M4</th>
+                  <th class="py-2.5 px-2 font-semibold">M5</th>
+                </tr>
+              </thead>
+              <tbody id="cohort-table-body" class="divide-y divide-slate-800/60 font-mono text-[11px]">
+                <!-- Diisi via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
+            <i data-lucide="info" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+            <span><strong>Observasi Kritis:</strong> Titik retensi turun paling signifikan dari M0 ke M1, namun kurva mulai melandai stabil pada M3 hingga M5 di kisaran 31%-34%.</span>
+          </div>
+        </div>
+
+        <!-- Tren Pendapatan vs Tingkat Churn (5 Kolom) -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <div class="mb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i>
+              Tren Pendapatan Bulanan & Tingkat Churn
+            </h3>
+            <p class="text-xs text-slate-400">Perbandingan pertumbuhan omzet kotor terhadap laju churn bulanan</p>
+          </div>
+          <div class="h-64 w-full">
+            <canvas id="chart-revenue-churn"></canvas>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Batang: Omzet (Rp Juta)</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Garis: Churn Rate (%)</span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Baris Grafik 2: Distribusi Segmen RFM & Simulator ROI Churn -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Distribusi Segmen RFM (5 Kolom) -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <div class="mb-3">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-cyan-400"></i>
+              Distribusi Segmen Pelanggan (Metode RFM)
+            </h3>
+            <p class="text-xs text-slate-400">Pengelompokan berdasarkan skor Recency, Frequency, & Monetary</p>
+          </div>
+          <div class="h-56 w-full flex items-center justify-center">
+            <canvas id="chart-rfm-donut"></canvas>
+          </div>
+          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div class="p-2 rounded-xl bg-slate-800/60 border border-slate-800">
+              <span class="text-indigo-400 font-bold block">Champions (28%)</span>
+              <span class="text-slate-400 text-[11px]">Penyumbang 58% total omzet kotor</span>
+            </div>
+            <div class="p-2 rounded-xl bg-slate-800/60 border border-slate-800">
+              <span class="text-rose-400 font-bold block">At Risk & Lost (38%)</span>
+              <span class="text-slate-400 text-[11px]">Prioritas re-engagement bulanan</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Interaktif Penurunan Churn & ROI Omzet (7 Kolom) -->
+        <div class="lg:col-span-7 bg-gradient-to-br from-indigo-950/60 via-slate-900 to-indigo-950/60 border border-indigo-500/30 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-1">
+              <i data-lucide="calculator" class="w-4 h-4"></i>
+              <span>Decision Support System Simulator</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Simulator Proyeksi Tambahan Omzet Penyelamatan Churn</h3>
+            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+              Geser nilai persentase target penurunan churn untuk melihat estimasi kenaikan omzet yang berhasil diselamatkan melalui program retensi.
+            </p>
+
+            <!-- Slider Range Control -->
+            <div class="mt-5 space-y-2 bg-slate-900/80 p-4 rounded-xl border border-slate-800">
+              <div class="flex justify-between items-center text-xs font-semibold">
+                <span class="text-slate-300">Target Penurunan Churn: <strong id="sim-pct-display" class="text-indigo-400 font-mono text-sm ml-1">5%</strong></span>
+                <span class="text-slate-400 font-mono text-[11px]">Jangkauan: 1% s/d 15%</span>
+              </div>
+              <input type="range" id="sim-slider" min="1" max="15" value="5" step="1" oninput="updateSimulator()" class="w-full accent-indigo-500 cursor-pointer h-2 bg-slate-800 rounded-lg" />
+            </div>
+          </div>
+
+          <!-- Kotak Hasil Proyeksi Finansial -->
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-slate-900/90 border border-emerald-500/40 rounded-xl p-4 text-center">
+              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block">Tambahan Pendapatan Diselamatkan</span>
+              <div id="sim-revenue-result" class="text-2xl font-black text-emerald-400 font-mono tracking-tight my-1">+Rp24.125.000</div>
+              <span class="text-[11px] text-slate-400">Estimasi pertambahan omzet per kuartal</span>
+            </div>
+            <div class="bg-slate-900/90 border border-indigo-500/40 rounded-xl p-4 text-center">
+              <span class="text-xs font-medium text-slate-400 uppercase tracking-wider block">Pelanggan Aktif Diselamatkan</span>
+              <div id="sim-customers-saved" class="text-2xl font-black text-indigo-400 font-mono tracking-tight my-1">~145 Pelanggan</div>
+              <span class="text-[11px] text-slate-400">Penghematan biaya CAC iklan baru</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 2: DATA & SPREADSHEET EXPLORER (60+ RECORDS) -->
+    <!-- ======================================================================= -->
+    <div id="tab-data" class="hidden space-y-5">
+      
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+          <div>
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
+              Eksplorasi Data Transaksi Pelanggan (60+ Records)
+            </h3>
+            <p class="text-xs text-slate-400">Dataset mentah berformat tabular dengan skor RFM, estimasi probabilitas churn, dan kanal asal</p>
+          </div>
+
+          <!-- Aksi & Pencarian -->
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative w-full sm:w-64">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5"></i>
+              <input type="text" id="table-search" oninput="handleTableSearch()" placeholder="Cari ID, Nama, atau Segmen..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 outline-none" />
+            </div>
+
+            <button onclick="toggleFormulaModal(true)" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition">
+              <i data-lucide="code" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Rumus Excel Terkait</span>
+            </button>
+            
+            <button onclick="exportCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 transition shadow-sm">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>Download (.CSV)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabel Data Interaktif -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800 custom-scroll">
+          <table class="w-full text-left text-xs text-slate-300">
+            <thead class="bg-slate-800/80 text-[11px] font-semibold text-slate-300 uppercase tracking-wider border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('id')">ID Pelanggan ⇅</th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('name')">Nama Pelanggan ⇅</th>
+                <th class="py-3 px-3">Kanal</th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('recency')">Recency (Hari) ⇅</th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('frequency')">Frekuensi ⇅</th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('monetary')">Total Belanja (Rp) ⇅</th>
+                <th class="py-3 px-3">Skor RFM</th>
+                <th class="py-3 px-3">Segmen</th>
+                <th class="py-3 px-3 cursor-pointer hover:text-white" onclick="sortTable('churnProb')">Prob. Churn ⇅</th>
+              </tr>
+            </thead>
+            <tbody id="raw-data-tbody" class="divide-y divide-slate-800/60 font-mono text-[11px]">
+              <!-- 60 baris diinjeksi via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Kontrol -->
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400">
+          <div id="table-record-count">Menampilkan 1 sampai 10 dari 60 baris</div>
+          <div class="flex items-center gap-2">
+            <button onclick="changePage(-1)" id="btn-prev-page" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 disabled:pointer-events-none transition">Sebelumnya</button>
+            <span id="page-indicator" class="px-3 py-1 font-mono text-slate-300">1 / 6</span>
+            <button onclick="changePage(1)" id="btn-next-page" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 disabled:opacity-40 disabled:pointer-events-none transition">Selanjutnya</button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 3: PIPELINE TEKNIS & CODE INSPECTOR (SQL, PYTHON, EXCEL) -->
+    <!-- ======================================================================= -->
+    <div id="tab-tech" class="hidden space-y-6">
+
+      <!-- Ringkasan Arsitektur Data Pipeline -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
+          <i data-lucide="layers" class="w-4 h-4"></i>
+          <span>Data Engineering & Analytics Architecture</span>
+        </div>
+        <h3 class="text-lg font-bold text-white">Alur Transformasi Data: Dari Transaksi Mentah ke Metrik Bisnis</h3>
+        <p class="text-xs text-slate-300 mt-1 max-w-3xl leading-relaxed">
+          Berikut adalah kueri SQL dan skrip Python yang digunakan untuk mentransformasi ledger transaksi mentah NexaMart menjadi metrik segmentasi RFM dan matriks kohor retensi bulanan yang siap dikonsumsi manajemen.
+        </p>
+
+        <!-- Kueri SQL: PostgreSQL Window Function -->
+        <div class="mt-6 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-mono flex items-center gap-2 font-semibold text-indigo-300">
+              <i data-lucide="database" class="w-4 h-4 text-indigo-400"></i>
+              PostgreSQL: Kueri Segmentasi RFM Menggunakan NTILE(5)
+            </span>
+            <button onclick="copySnippet('sql-snippet')" class="flex items-center gap-1 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kueri SQL
+            </button>
+          </div>
+          <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto custom-scroll leading-relaxed"><code id="sql-snippet">-- ===================================================================
+-- PROYEK: NexaMart Customer Segmentation (Metode RFM)
+-- TUJUAN: Menghitung Recency, Frequency, Monetary & Kategori Segmen
+-- ===================================================================
+
+WITH customer_summary AS (
+    SELECT
+        customer_id,
+        MIN(order_date) AS first_purchase_date,
+        MAX(order_date) AS latest_purchase_date,
+        -- Recency: Selisih hari dari transaksi terakhir ke tanggal referensi
+        ('2024-06-30'::DATE - MAX(order_date)::DATE) AS recency_days,
+        -- Frequency: Total jumlah transaksi unik
+        COUNT(DISTINCT order_id) AS frequency,
+        -- Monetary: Akumulasi nilai belanja kotor
+        SUM(total_amount_idr) AS monetary_value
+    FROM nexamart_orders
+    WHERE order_status = 'COMPLETED'
+    GROUP BY customer_id
+),
+rfm_scoring AS (
+    SELECT
+        customer_id,
+        recency_days,
+        frequency,
+        monetary_value,
+        -- NTILE(5): Membagi distribusi pelanggan menjadi 5 kuantil sama rata
+        NTILE(5) OVER (ORDER BY recency_days DESC) AS r_score,
+        NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
+        NTILE(5) OVER (ORDER BY monetary_value ASC) AS m_score
+    FROM customer_summary
+)
+SELECT
+    customer_id,
+    recency_days,
+    frequency,
+    monetary_value,
+    CONCAT(r_score, f_score, m_score) AS rfm_combined_score,
+    CASE
+        WHEN r_score >= 4 AND f_score >= 4 THEN 'Champions'
+        WHEN r_score >= 3 AND f_score >= 3 THEN 'Loyal Customers'
+        WHEN r_score >= 3 AND f_score <= 2 THEN 'Potential Loyalist'
+        WHEN r_score <= 2 AND f_score >= 3 THEN 'At Risk'
+        ELSE 'Lost'
+    END AS customer_segment
+FROM rfm_scoring
+ORDER BY monetary_value DESC;</code></pre>
+        </div>
+
+        <!-- Skrip Python: Pandas Cohort Matrix -->
+        <div class="mt-6 space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-mono flex items-center gap-2 font-semibold text-emerald-300">
+              <i data-lucide="file-code" class="w-4 h-4 text-emerald-400"></i>
+              Python (Pandas): Transformasi Data Transaksi Menjadi Matriks Kohor
+            </span>
+            <button onclick="copySnippet('python-snippet')" class="flex items-center gap-1 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 transition">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Skrip Python
+            </button>
+          </div>
+          <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 font-mono text-[11px] text-slate-300 overflow-x-auto custom-scroll leading-relaxed"><code id="python-snippet">import pandas as pd
+import numpy as np
+
+# 1. Muat data riwayat transaksi
+df = pd.read_csv('nexamart_orders.csv', parse_dates=['order_date'])
+
+# 2. Definisikan bulan transaksi dan bulan pertama kali akuisisi (Kohor)
+df['order_month'] = df['order_date'].dt.to_period('M')
+df['cohort_month'] = df.groupby('customer_id')['order_month'].transform('min')
+
+# 3. Hitung indeks bulan retensi (0 = M0, 1 = M1, ...)
+def calculate_cohort_index(df):
+    year_diff = df['order_month'].dt.year - df['cohort_month'].dt.year
+    month_diff = df['order_month'].dt.month - df['cohort_month'].dt.month
+    return year_diff * 12 + month_diff
+
+df['cohort_index'] = calculate_cohort_index(df)
+
+# 4. Agregasi pelanggan unik per kohor dan indeks
+cohort_pivot = df.groupby(['cohort_month', 'cohort_index'])['customer_id'].nunique().reset_index()
+retention_matrix = cohort_pivot.pivot(index='cohort_month', columns='cohort_index', values='customer_id')
+
+# 5. Normalisasi persentase retensi relatif terhadap Bulan ke-0 (M0)
+cohort_sizes = retention_matrix.iloc[:, 0]
+retention_rate_pct = retention_matrix.divide(cohort_sizes, axis=0) * 100
+
+print("=== MATRIKS RETENSI KOHOR BULANAN (PERSENTASE %) ===")
+print(retention_rate_pct.round(1))</code></pre>
+        </div>
+
+        <!-- Panduan Replikasi Rumus di Excel / Google Sheets -->
+        <div class="mt-6 p-4 rounded-xl bg-slate-800/40 border border-slate-700/60">
+          <h4 class="text-sm font-bold text-white flex items-center gap-2 mb-2">
+            <i data-lucide="sheet" class="w-4 h-4 text-emerald-400"></i>
+            Cara Replikasi Segmentasi RFM di Excel / Google Sheets
+          </h4>
+          <div class="space-y-2 text-xs text-slate-300 leading-relaxed">
+            <p><strong>1. Recency:</strong> Gunakan rumus <code>=DATEDIF(MAX(Tanggal_Transaksi_Customer), TODAY(), "d")</code>.</p>
+            <p><strong>2. Frequency:</strong> Gunakan rumus <code>=COUNTIF(Kolom_Customer_ID, ID_Tertentu)</code>.</p>
+            <p><strong>3. Monetary:</strong> Gunakan rumus <code>=SUMIFS(Kolom_Total_Belanja, Kolom_Customer_ID, ID_Tertentu)</code>.</p>
+            <p><strong>4. Skor Kuantil:</strong> Manfaatkan rumus <code>=PERCENTRANK()</code> dikombinasikan fungsi <code>IF()</code> bertingkat untuk memberi bobot skor 1 hingga 5.</p>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- TAB 4: EXECUTIVE STORYTELLING & STRATEGIC RECOMMENDATIONS -->
+    <!-- ======================================================================= -->
+    <div id="tab-story" class="hidden space-y-6">
+
+      <!-- Header Storytelling -->
+      <section class="bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div class="flex items-center gap-2.5 text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">
+          <i data-lucide="compass" class="w-4 h-4"></i>
+          <span>Data Storytelling & Ringkasan Eksekutif</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+          Menutup "Kebocoran Keranjang": Strategi Mengamankan Rp241 Juta Pendapatan Retensi
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-300 max-w-4xl leading-relaxed">
+          Berdasarkan analisis survival kohor dan pemodelan RFM terhadap data transaksi Q1 - Q2 2024, ditemukan bahwa pertumbuhan pengguna baru tidak diimbangi dengan tingkat retensi jangka panjang. Fokus mempertahankan basis pelanggan lama menawarkan ROI hingga 3,2 kali lipat lebih efisien dibandingkan terus membakar anggaran iklan akuisisi.
+        </p>
+      </section>
+
+      <!-- 4 Temuan Utama Berbasis Data -->
+      <section class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        <!-- Temuan 1 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/40 transition">
+          <div class="flex items-center gap-3 mb-2.5">
+            <span class="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 font-bold font-mono flex items-center justify-center text-xs border border-rose-500/20">01</span>
+            <h4 class="text-sm font-bold text-white">Penurunan Curam Terjadi Antara Bulan 0 ke Bulan 1</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Lebih dari <strong>52% pengguna baru tidak pernah kembali bertransaksi</strong> setelah pembelian pertama. Titik kebocoran tertinggi terjadi pada hari ke-30 hingga ke-45 pasca-transaksi pertama.
+          </p>
+        </div>
+
+        <!-- Temuan 2 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/40 transition">
+          <div class="flex items-center gap-3 mb-2.5">
+            <span class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 font-bold font-mono flex items-center justify-center text-xs border border-indigo-500/20">02</span>
+            <h4 class="text-sm font-bold text-white">Segmen Champions Menyumbang 58% Omzet Bisnis</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Meskipun kelompok <strong>Champions</strong> hanya mencakup 28% dari total jumlah pengguna, mereka berkontribusi sebesar 58% dari total pendapatan kotor dengan frekuensi rata-rata 5,8 kali transaksi.
+          </p>
+        </div>
+
+        <!-- Temuan 3 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/40 transition">
+          <div class="flex items-center gap-3 mb-2.5">
+            <span class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 font-bold font-mono flex items-center justify-center text-xs border border-emerald-500/20">03</span>
+            <h4 class="text-sm font-bold text-white">Kanal Google Search & Organic Memiliki Kualitas Retensi Tertinggi</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Pelanggan dari Google Search menghasilkan tingkat retensi 6 bulan sebesar <strong>41,5%</strong>, jauh mengungguli pelanggan dari Meta Ads (24,2%) yang cenderung bersifat pemburu diskon sesaat.
+          </p>
+        </div>
+
+        <!-- Temuan 4 -->
+        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 hover:border-indigo-500/40 transition">
+          <div class="flex items-center gap-3 mb-2.5">
+            <span class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 font-bold font-mono flex items-center justify-center text-xs border border-amber-500/20">04</span>
+            <h4 class="text-sm font-bold text-white">Kelompok "At Risk" Membutuhkan Intervensi Cepat</h4>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Terdapat 14 pelanggan bernilai belanja tinggi yang telah melewati 60 hari tanpa repeat order. Mengabaikan segmen ini berisiko menghilangkan potensi omzet berulang senilai Rp45.000.000.
+          </p>
+        </div>
+
+      </section>
+
+      <!-- 3 Rekomendasi Solusi Strategis -->
+      <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="shield-alert" class="w-5 h-5 text-indigo-400"></i>
+          Rekomendasi Aksi Bisnis Konkret (Actionable Roadmap)
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          
+          <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 flex flex-col justify-between">
+            <div>
+              <span class="text-indigo-400 font-mono font-bold text-[10px] uppercase">Rekomendasi 1</span>
+              <h5 class="text-sm font-bold text-white mt-1">Program Eksklusif "VIP Champions"</h5>
+              <p class="text-slate-300 mt-2 leading-relaxed">
+                Berikan fasilitas bebas ongkir instan dan akses awal rilisan produk baru bagi 28% pelanggan kategori Champions untuk menjaga retensi di atas 85%.
+              </p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-700 text-emerald-400 font-medium">
+              Ekspektasi: Menjaga omzet inti stabil
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 flex flex-col justify-between">
+            <div>
+              <span class="text-indigo-400 font-mono font-bold text-[10px] uppercase">Rekomendasi 2</span>
+              <h5 class="text-sm font-bold text-white mt-1">Alur Re-engagement Otomatis Hari Ke-21</h5>
+              <p class="text-slate-300 mt-2 leading-relaxed">
+                Kirimkan penawaran voucher bundling produk pelengkap melalui WhatsApp/Email pada hari ke-21 sebelum pelanggan jatuh ke zona churn permanen (hari ke-45).
+              </p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-700 text-emerald-400 font-medium">
+              Target: Mengangkat retensi M1 sebesar +6,5%
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-800/50 border border-slate-700/60 flex flex-col justify-between">
+            <div>
+              <span class="text-indigo-400 font-mono font-bold text-[10px] uppercase">Rekomendasi 3</span>
+              <h5 class="text-sm font-bold text-white mt-1">Realokasi 25% Anggaran Iklan Berbayar</h5>
+              <p class="text-slate-300 mt-2 leading-relaxed">
+                Pindahkan sebagian bujet dari Meta Ads ke Google Search berkategori intent tinggi serta kampanye retargeting database pelanggan yang sudah ada.
+              </p>
+            </div>
+            <div class="mt-4 pt-2 border-t border-slate-700 text-emerald-400 font-medium">
+              Efisiensi: Hemat Rp18.500.000 CAC sia-sia
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- Modal Rumus Excel Terkait -->
+  <div id="modal-formula" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h4 class="text-sm font-bold text-white flex items-center gap-2">
+          <i data-lucide="sheet" class="w-4 h-4 text-emerald-400"></i>
+          Formula Penting Spreadsheet (Excel / Google Sheets)
+        </h4>
+        <button onclick="toggleFormulaModal(false)" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 font-mono">
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <span class="text-emerald-400 font-bold block mb-1">1. Klasifikasi Status Churn:</span>
+          <code>=IF(D2 &gt; 60; "CHURN"; "AKTIF")</code>
+          <p class="text-[11px] text-slate-400 font-sans mt-1">Di mana sel D2 berisi Recency (jumlah hari sejak transaksi terakhir).</p>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <span class="text-indigo-400 font-bold block mb-1">2. Menghitung Total Omzet per Kanal:</span>
+          <code>=SUMIFS(F:F; C:C; "Google Search")</code>
+          <p class="text-[11px] text-slate-400 font-sans mt-1">Menjumlahkan kolom F (Monetary) untuk baris kanal tertentu.</p>
+        </div>
+
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <span class="text-cyan-400 font-bold block mb-1">3. Lookup Segmentasi Berdasarkan Skor:</span>
+          <code>=VLOOKUP(G2; Tabel_Kategori_RFM; 2; FALSE)</code>
+          <p class="text-[11px] text-slate-400 font-sans mt-1">Mengambil nama segmen dari tabel referensi skor RFM.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="toggleFormulaModal(false)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Proyek -->
+  <footer class="mt-auto border-t border-slate-800 bg-slate-900/80 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        <span>Portofolio Data Analyst: <strong>NexaMart Customer Retention Study</strong></span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Teknologi: SQL (PostgreSQL) • Python (Pandas) • Chart.js • Tailwind CSS</span>
+        <span>•</span>
+        <button onclick="setTab('story')" class="text-indigo-400 hover:underline">Baca Ringkasan Eksekutif</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts: Datasets & Application Logic -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
